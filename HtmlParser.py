@@ -16,8 +16,7 @@ class HtmlParser(object):
     def _get_new_urls(self, page_url, soup):
         new_urls = set()
         links = soup.find_all('a',href=re.compile(r'/subject/\d*/$'))
-        for l in links:
-            print l
+        #TODO: 如果links是None那么有可能报NoneType is not iterable
         for link in links:
             new_url = link['href']
             new_full_url = urlparse.urljoin(page_url,new_url)
@@ -26,13 +25,44 @@ class HtmlParser(object):
 
     def _get_new_data(self, page_url, soup):
         data = {}
-        data['url'] = page_url
-        print soup.prettify()
-        comments = soup.find(id='comments',class_='comment-list hot show')
+        try:
+            data['book_id'] = page_url.split('/')[-2]
+            data['list'] = []
+            comments = soup.find(id='comments', class_='comment-list hot show').find_all('li')
+            for child in comments:
+                child_list = {}
+                # user_id
+                if child.find('a', href=re.compile(r'people')):
+                    child_list['user_id'] = child.find('a', href=re.compile(r'people'))['href'].split('/')[-2]
+                else:
+                    child_list['user_id'] = ''
 
-        # data['title'] = title.get_text()
-        # summary = soup.find('div',class_='lemma-summary')
-        # data['summary'] = summary.get_text()
+                # user_name
+                if child.find('a', href=re.compile(r'people')):
+                    child_list['user_name'] = child.find('a', href=re.compile(r'people')).get_text()
+                else:
+                    child_list['user_name'] = ''
+
+                # user_rating
+                if child.find('span', class_='rating'):
+                    child_list['rating'] = child.find('span', class_='rating')['title']
+                else:
+                    child_list['rating'] = ''
+
+                if child.find(text=re.compile(r'\d*-\d*-\d')):
+                    child_list['time'] = child.find(text=re.compile(r'\d*-\d*-\d'))
+                else:
+                    child_list['time'] = ''
+
+                if child.find(class_='comment-content'):
+                    child_list['comment'] = child.find(class_='comment-content').get_text()
+                else:
+                    child_list['comment'] = ''
+                data['list'].append(child_list)
+
+        except Exception as e:
+            print e
+
         return data
 
 
