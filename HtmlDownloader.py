@@ -26,7 +26,8 @@ class HtmlDownloader(object):
 
         while self.index < 100:
             try:
-                r = requests.get('http://www.douban.com', headers=headers, proxies=proxies, timeout=5)
+                #没必要用豆瓣试试水
+                r = requests.get('http://www.baidu.com', headers=headers, proxies=proxies, timeout=5)
                 return proxies
             except Exception as e:
                 time.sleep(5)
