@@ -25,4 +25,5 @@ class SpiderMan(object):
 
 if __name__ == "__main__":
     spider = SpiderMan()
+    book_id =
     spider.crawl("https://book.douban.com/subject/5363767/")

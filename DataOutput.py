@@ -1,6 +1,7 @@
 # encoding:utf-8
 import codecs
 import pymysql
+import time
 class DataOutput(object):
     def __init__(self):
         self.datas=[]
@@ -42,5 +43,24 @@ class DataOutput(object):
                 user_sql = 'INSERT INTO user_book_rating (userid,user_name,rating,comment,bookid,time) VALUES(' + book_data + ');'
                 self.cursor.execute(user_sql)
                 self.conn.commit()
+        except Exception as e:
+            print e
+
+    def get_new_book_id_index(self,start_index):
+        try:
+            user_sql = 'SELECT * FROM `valid_index` ORDER BY time DESC'
+            self.cursor.execute(user_sql)
+            results = self.cursor.fetchall()
+            index = results[0]['index']
+        except Exception as e:
+            print e
+        return index
+
+    def get_new_book_id_index(self,target_index):
+        try:
+            index_data = "%s,'%s'"%(target_index,time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())))
+            user_sql = 'INSERT INTO valid_index (bindex, btime) VALUES' + index_data + ');'
+            self.cursor.execute(user_sql)
+            self.conn.commit()
         except Exception as e:
             print e
