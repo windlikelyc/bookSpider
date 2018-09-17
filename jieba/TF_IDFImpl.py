@@ -57,24 +57,14 @@ def IDFWork():
     print('vetzer=', vetzer_array.shape, 'names', len(feature_array))
 
     result = transformer.fit_transform(vetzer.toarray()).toarray()
+    loc = np.argsort(-result[0])
+    print "前20的关键词"
+    for i in range(20):
+        print feature_array[loc[i]]
 
-    for (title, w) in zip(feature_array, result[0].tolist()):
-        print('title=',title,'w=',w)
 
 
     return
-def getImportant():
-    n = 5  # 前五位
-
-
-    # for (title, w) in zip(titlelist, weight):
-    #     print u'{}:'.format(title)
-    #     # 排序
-    #     loc = np.argsort(-w)
-    #     for i in range(n):
-    #         print u'-{}: {} {}'.format(str(i + 1), words[loc[i]], w[loc[i]])
-    #     print '\n'
-
 oneWork()
 fenciWork()
 IDFWork()
