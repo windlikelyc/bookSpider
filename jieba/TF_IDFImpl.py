@@ -4,11 +4,11 @@ import numpy as np
 import os   #用于打开一个文件，并遍历文件中所有的txt文件，存储到数组中
 import jieba  #结巴分词
 import io
-
+import numpy as np
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import CountVectorizer
 
-filePath = "E:/spider/tmp/"  #txt文本集所在的文件夹路径
+filePath = "E:/spider/booksummery/"  #txt文本集所在的文件夹路径
 txtNames = list()                     #所有txt文档名字
 result_array = list()
 
@@ -55,9 +55,25 @@ def IDFWork():
     vetzer_array = vetzer.toarray() #把词频转为词频矩阵存入数组
     feature_array = vectorizer.get_feature_names()  #词频矩阵，每一行每个元素对应的 词的值
     print('vetzer=', vetzer_array.shape, 'names', len(feature_array))
-    print('result=', transformer.fit_transform(vetzer.toarray()))  #计算每个词出现在每个文档中的概率
+
+    result = transformer.fit_transform(vetzer.toarray()).toarray()
+
+    for (title, w) in zip(feature_array, result[0].tolist()):
+        print('title=',title,'w=',w)
+
 
     return
+def getImportant():
+    n = 5  # 前五位
+
+
+    # for (title, w) in zip(titlelist, weight):
+    #     print u'{}:'.format(title)
+    #     # 排序
+    #     loc = np.argsort(-w)
+    #     for i in range(n):
+    #         print u'-{}: {} {}'.format(str(i + 1), words[loc[i]], w[loc[i]])
+    #     print '\n'
 
 oneWork()
 fenciWork()
