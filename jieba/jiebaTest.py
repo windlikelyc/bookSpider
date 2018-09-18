@@ -11,26 +11,12 @@ if __name__=='__main__':
         with db.cursor() as src_cursor:
             src_cursor.execute(sql)
             result = src_cursor.fetchone()
-
             while result is not None:
                 result = result['book_summery']
-
-
-
                 seg_list = jieba.cut("上海自来水来自海上", cut_all=False)
                 for a in seg_list:
                     print a
                 print "-------------------------------"
-
-
-
-
-
-
-
-
-
-
                 result = src_cursor.fetchone()
         db.close()
 
