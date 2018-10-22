@@ -1,5 +1,6 @@
 # encoding:utf-8
 import codecs
+import pymongo
 import pymysql
 import time
 class DataOutput(object):
@@ -39,8 +40,8 @@ class DataOutput(object):
             book_id = alldata['book_id']
             datas = alldata['list']
             for data in datas:
-                book_data = "'%s','%s','%s','%s','%s','%s' " % (data['user_id'], data['user_name'].replace("'", "\\\'"), data['rating'], data['comment'], book_id , data['time'])
-                user_sql = 'INSERT INTO user_book_rating (userid,user_name,rating,comment,bookid,time) VALUES(' + book_data + ');'
+                book_data = "'%s','%s','%s','%s','%s','%s','%s',%d " % (data['user_id'], data['user_name'].replace("'", "\\\'"), data['rating'], data['comment'], book_id , data['time'],data['user_img'],int(data['valid_count']))
+                user_sql = 'INSERT INTO user_book_rating_new (user_id,user_name,rating,comment,book_id,rate_time,user_img,valid_count) VALUES(' + book_data + ');'
                 self.cursor.execute(user_sql)
                 self.conn.commit()
         except Exception as e:

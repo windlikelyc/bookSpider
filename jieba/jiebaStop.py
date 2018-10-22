@@ -4,6 +4,7 @@ import jieba
 import io
 def stopwordslist(filepath):
     stopwords = [line.strip() for line in io.open(filepath, 'r',encoding="utf-8").readlines()]
+    print str(stopwords)
     return stopwords
 
 

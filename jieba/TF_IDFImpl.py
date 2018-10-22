@@ -13,6 +13,8 @@ dict = {}
 nowid = 0
 # 构造dict字典，key是图书id，value是一个dict，其中key是单词，value是词频
 di = {}
+fo = open("foo.txt", "w")
+
 
 paraNumber = 100 # 要选取的评论数
 topKey = 20 # 关键词个数
@@ -53,6 +55,14 @@ def fenciWork():
     #         seg_result = '%s%s%s' % (seg_result, ' ', seg)
     # print('seg_result=', seg_result)
     result_array.append(seg_result)
+
+    folist = list()
+    for a in result_array:
+        folist.append(a.encode('utf8'))
+
+    fo.write(' '.join(folist))
+    fo.write('\n')
+
     # print('result_array=', result_array)
     return result_array
 
@@ -119,6 +129,7 @@ for i in dict:
         max =a
         maxId = i
 print ('the similist boook of',wonderId.encode('utf8'),'is:' ,maxId)
+fo.close()
 
 
 
