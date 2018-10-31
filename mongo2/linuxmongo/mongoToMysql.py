@@ -1,7 +1,7 @@
 # encoding:utf-8
-# 查看用户有多少个评论
-import pymongo
+# 将mongodb的数据导入到数据库中
 
+import pymongo
 
 
 listWant = list()
@@ -11,7 +11,8 @@ client = pymongo.MongoClient(host='39.106.39.216',port=27017)
 db = client.doubandb
 collection = db.comments
 
-results = collection.find().count()
-print(results)
+results = collection.find()
+for result in results:
+    print(result)
 
 
