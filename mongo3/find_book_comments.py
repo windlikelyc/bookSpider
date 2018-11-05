@@ -3,19 +3,21 @@
 # 用户采用数据集中所有评论数目大于50本书的，调用API，用户有多个标签用逗号隔开
 
 # num : 想要的用户数量
+# 1078790 10月31日 图书id 编号到这里
+
 import json
 import urllib2
 
 import pymysql
 
-insert_to_mysql = False
+insert_to_mysql = True
 num_of_api = 0
 
-def get_usesrs(num,offset=0):
+def get_books(num,offset=0):
     list_want = list()
     i = 1
     j = 1
-    with open('users.dat', 'r') as f:
+    with open('books.dat', 'r') as f:
         for line in f.readlines():
             if j > offset:
                 list_want.append(line.strip())
@@ -36,22 +38,29 @@ def connet_to_mysql(sql_list): #将一大堆sql语句插入到数据库中
 
 # 将一个dict转换为
 def get_para(item):
-    return '("%s","%s","%s","%s","%s","%s","%s")'%(item['status'],item['rating'],item['updated'],item['comments'],item['tags'],item['book_id'],item['user_id'])
+    return '("%s","%s","%s","%s","%s","%s","%s")'%(item['votes'],item['user_id'],item['book_id'],item['rating'],item['published'],item['alt'],item['summary'])
 
-def get_html(uid,start,count):
+def get_html(bid,start,count):
     global num_of_api
     num_of_api = num_of_api + 1
     url = "https://api.douban.com/v2/book/%s/comments?apikey=0b2bdeda43b5688921839c8ecb20399b&start=%s&count=%s"%(bid,start,count)
-    response = urllib2.urlopen(url)
+    try:
+        response = urllib2.urlopen(url)
+    except Exception as e:
+        print  e
+        return None
     return json.loads(response.read())
 
 # 返回uid的c条 有效 评论
-def get_user_collections(uid,wanted_count,min_count = 5,max_count = 100,strict_comment=True,strict_rating=True,strict_tag = True):
+def get_user_collections(uid,wanted_count,min_count = 2,max_count = 100,strict_comment=True,strict_rating=True,strict_tag = True):
 
     records = []
-    un = open('user_unvalid.dat', 'a') # 记录没有评论的用户
+    un = open('book_unvalid.dat', 'a') # 记录没有评论的用户
     comments_count = 0
     html = get_html(uid,0,100) # 先试试水
+    if html is None:
+        return [],0
+
     already = 0
     cycle = 0
     if html['total'] >= min_count :
@@ -60,9 +69,11 @@ def get_user_collections(uid,wanted_count,min_count = 5,max_count = 100,strict_c
         for i in range(num):
             try:
                 tmp = dict()
-                term = html['collections'][i]
-                tmp['status'] = term['status']
-                tmp['updated'] = term['updated']
+                term = html['comments'][i]
+                if int(term['votes']) == 0:
+                    continue
+                tmp['published'] = term['published']
+                tmp['votes'] = term['votes']
 
                 if strict_rating :
                     tmp['rating'] = term['rating']['value']
@@ -72,16 +83,12 @@ def get_user_collections(uid,wanted_count,min_count = 5,max_count = 100,strict_c
                     else:
                         tmp['rating'] = term['rating']['value']
                 if strict_comment :
-                    tmp['comments'] = term['comments']
+                    tmp['summary'] = term['summary']
                 else:
-                    tmp['comments'] = term.get('comments','')
-
-                if strict_tag:
-                    tmp['tags'] = ','.join(term['tags'])
-                else:
-                    tmp['tags'] = term.get('tags', '')
-                tmp['book_id'] = term['book_id']
-                tmp['user_id'] = term['user_id']
+                    tmp['summary'] = term.get('summary','')
+                tmp['book_id'] = uid
+                tmp['user_id'] = term['author']['id']
+                tmp['alt'] = term['alt']
                 records.append(tmp)
                 already = already + 1
             except Exception as e:
@@ -93,9 +100,11 @@ def get_user_collections(uid,wanted_count,min_count = 5,max_count = 100,strict_c
             for i in range(num):
                 try:
                     tmp = dict()
-                    term = html['collections'][i]
-                    tmp['status'] = term['status']
-                    tmp['updated'] = term['updated']
+                    term = html['comments'][i]
+                    if int(term['votes']) == 0:
+                        continue
+                    tmp['published'] = term['published']
+                    tmp['votes'] = term['votes']
 
                     if strict_rating:
                         tmp['rating'] = term['rating']['value']
@@ -105,16 +114,12 @@ def get_user_collections(uid,wanted_count,min_count = 5,max_count = 100,strict_c
                         else:
                             tmp['rating'] = term['rating']['value']
                     if strict_comment:
-                        tmp['comments'] = term['comments']
+                        tmp['summary'] = term['summary']
                     else:
-                        tmp['comments'] = term.get('comments', '')
-
-                    if strict_tag:
-                        tmp['tags'] = ','.join(term['tags'])
-                    else:
-                        tmp['tags'] = term.get('tags', '')
-                    tmp['book_id'] = term['book_id']
-                    tmp['user_id'] = term['user_id']
+                        tmp['summary'] = term.get('summary', '')
+                    tmp['book_id'] = uid
+                    tmp['user_id'] = term['author']['id']
+                    tmp['alt'] = term['alt']
                     records.append(tmp)
                     already = already + 1
                 except Exception as e:
@@ -127,30 +132,21 @@ def get_user_collections(uid,wanted_count,min_count = 5,max_count = 100,strict_c
         records = []
     return records,comments_count
 if __name__ == "__main__":
-    list = get_usesrs(8000,offset=250)
+    list = get_books(8000,offset=669)
+    if insert_to_mysql:
+        conn = pymysql.connect(host='39.106.39.216',
+                               user='root',
+                               passwd="admin123",
+                               db='doubandb_test',
+                               port=3306,
+                               charset='utf8')
+        cursor = conn.cursor()
     for i in range(len(list)):
-        if insert_to_mysql:
-            conn = pymysql.connect(host='39.106.39.216',
-                                   user='root',
-                                   passwd="admin123",
-                                   db='doubandb_test',
-                                   port=3306,
-                                   charset='utf8')
-            cursor = conn.cursor()
-
-        per_user = get_user_collections(list[i],wanted_count=100,strict_comment=False,strict_rating=False)
+        per_user = get_user_collections(list[i],wanted_count=2,strict_comment=False,strict_rating=True)
         sql_list = []
-        try:
-            sql2 = 'Insert into user_collections_count (user_id,count) VALUES ("%s","%d")'%(list[i], per_user[1])
-            print sql2
-            if insert_to_mysql:
-                cursor.execute(sql2)
-                conn.commit()
-        except Exception as e:
-            pass
         for j in range(len(per_user[0])):
             try:
-                sql = 'Insert into user_collections_1 (status,rating,updated,comments,tags,book_id,user_id) VALUES ' + get_para(per_user[0][j])
+                sql = 'Insert into book_comments (votes,user_id,book_id,rating,published,alt,summary) VALUES ' + get_para(per_user[0][j])
                 print sql
                 if insert_to_mysql:
                     cursor.execute(sql)
