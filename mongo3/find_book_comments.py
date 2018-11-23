@@ -9,6 +9,8 @@ import json
 import urllib2
 
 import pymysql
+from DBUtils.PooledDB import PooledDB
+import time
 
 insert_to_mysql = True
 num_of_api = 0
@@ -38,7 +40,9 @@ def connet_to_mysql(sql_list): #将一大堆sql语句插入到数据库中
 
 # 将一个dict转换为
 def get_para(item):
-    return '("%s","%s","%s","%s","%s","%s","%s")'%(item['votes'],item['user_id'],item['book_id'],item['rating'],item['published'],item['alt'],item['summary'])
+    now = int(round(time.time() * 1000))
+    now02 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(now / 1000))
+    return '("%s","%s","%s","%s","%s","%s","%s","%s")'%(item['votes'],item['user_id'],item['book_id'],item['rating'],item['published'],item['alt'],item['summary'],now02)
 
 def get_html(bid,start,count):
     global num_of_api
@@ -132,27 +136,57 @@ def get_user_collections(uid,wanted_count,min_count = 2,max_count = 100,strict_c
         records = []
     return records,comments_count
 if __name__ == "__main__":
-    list = get_books(8000,offset=669)
+    list = get_books(80000,offset=16162)
     if insert_to_mysql:
-        conn = pymysql.connect(host='39.106.39.216',
-                               user='root',
-                               passwd="admin123",
-                               db='doubandb_test',
-                               port=3306,
-                               charset='utf8')
-        cursor = conn.cursor()
+        # conn = pymysql.connect(host='39.106.39.216',
+        #                        user='root',
+        #                        passwd="admin123",
+        #                        db='doubandb_test',
+        #                        port=3306,
+        #                        charset='utf8')
+        # cursor = conn.cursor()
+        pool = PooledDB(pymysql,5,host='39.106.39.216',
+                        user='root',
+                        passwd="admin123",
+                        db='doubandb_test',
+                        port=3306,
+                        charset='utf8')
+
+
+
+    log = open('log', 'a')
     for i in range(len(list)):
+        global num_of_api
+        if num_of_api > 9500:
+            num_of_api = 0
+            time.sleep(2*60*60)
+
         per_user = get_user_collections(list[i],wanted_count=2,strict_comment=False,strict_rating=True)
         sql_list = []
         for j in range(len(per_user[0])):
             try:
-                sql = 'Insert into book_comments (votes,user_id,book_id,rating,published,alt,summary) VALUES ' + get_para(per_user[0][j])
-                print sql
+
+                sql = 'Insert into book_comments_new (votes,user_id,book_id,rating,published,alt,summary,create_time) VALUES ' + get_para(per_user[0][j])
                 if insert_to_mysql:
-                    cursor.execute(sql)
+                    conn = pool.connection()
+                    cur = conn.cursor()
+                    cur.execute(sql)
                     conn.commit()
+
+                    # cursor.execute(sql)
+                    # conn.commit()
             except Exception as e:
-                pass
+                now = int(round(time.time() * 1000))
+                now02 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(now / 1000))
+                log.write(now02)
+                log.write('\t')
+                log.write(str(e))
+                log.write('\n')
+                log.flush()
+            finally:
+                cur.close()
+                conn.close()
+
 
 
 

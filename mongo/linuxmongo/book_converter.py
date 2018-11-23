@@ -4,6 +4,7 @@
 # 使用方式，将想要爬去的图书id放到data 文件中， 输出的文件就会在book——id——map中，之后可以联系用户评论进一步做转化。
 
 # 本脚本过滤掉了所有标签和作者 完 全 一 致 的标签，因为作者信息已经很能够表现图书主题了
+# 之后将生成的book_id_map 文件放到 mysql_to_file 文件夹中去， 然后生成最终的 data 文件，分割扯train test 放到F：/book/data的目录下
 import codecs
 import json
 import urllib2
@@ -20,7 +21,7 @@ collection = db.students
 
 
 
-fo = codecs.open('data.txt', 'r', encoding='utf-8')
+fo = codecs.open('data_2.txt', 'r', encoding='utf-8')
 book_ids =[]
 book_t0_num = {}
 btnint = 0
@@ -32,7 +33,7 @@ for line in fo.readlines():
 
 fo.close()
 
-fo2 = codecs.open('book_id_map.txt', 'w', encoding='utf-8')
+fo2 = codecs.open('book_id_map_2.txt', 'w', encoding='utf-8')
 
 tag_dict = {}  # tag名称-- 对应序号
 
@@ -64,7 +65,12 @@ for i in range(len(book_ids)):
     book_tag[book_ids[i]] = []
     book_author[book_ids[i]] = []
 
-    book_publisher[book_ids[i]] = results['publisher']
+
+
+    if results.has_key('publisher'):
+        book_publisher[book_ids[i]] = results['publisher'].strip()
+    else:
+        book_publisher[book_ids[i]] = u"NoPub"
 
     already_tag_count = 0 # 过滤掉作者标签
     while wondertag > 0:
@@ -82,8 +88,12 @@ for i in range(len(book_ids)):
     for j in range(wondertag):
         book_tag[book_ids[i]].append(results['tags'][j]['name'])
 
-    for j in range(len(results['author'])):
-        book_author[book_ids[i]].append(results['author'][j])
+
+    if  results.has_key('author'):
+        for j in range(len(results['author'])):
+            book_author[book_ids[i]].append(results['author'][j].strip())
+    else:
+        book_author[book_ids[i]].append(u"NoAuthor")
 
 
     fo2.write(book_t0_num[book_ids[i]])
@@ -94,12 +104,15 @@ for i in range(len(book_ids)):
     fo2.write('\t')
 
     if len(book_author[book_ids[i]]) == 0:
-        fo2.write(u"None")
+        fo2.write(u"NoAuthor")
     else:
         fo2.write(".".join(book_author[book_ids[i]]))
 
     fo2.write("\t")
-    fo2.write(book_publisher[book_ids[i]])
+    if book_publisher[book_ids[i]] is None or book_publisher[book_ids[i]] == '':
+        fo2.write(u"NoPub")
+    else:
+        fo2.write(book_publisher[book_ids[i]])
     fo2.write("\n")
 
     fo2.flush()
