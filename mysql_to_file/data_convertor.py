@@ -63,6 +63,7 @@ for line in fo.readlines():
     for t in range(len(tags)):
         ta_l.append(seq_tags.index(tags[t]))
     fo_write.write(".".join(map(str,ta_l)))
+
     fo_write.write("\t")
 
     au_l = []

@@ -25,8 +25,9 @@ for child in comments:
         author_and_date = unicode(child.find(class_='color-gray').string).strip()
         pubdate = author_and_date.split('/')[-1]
         detail = unicode(child.find(class_='detail').string).strip()
-        book_data = "'%s','%s','%s','%s','%s','%s','%s' "%(title,author_and_date,pubdate,img,rate,href,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-        user_sql = 'INSERT INTO book_new (title,publisher_and_author,pubdate,img,rate,href,create_time) VALUES(' + book_data + ');'
+        id = child.find_all('a')[0]['href'].split('/')[-2]
+        book_data = "'%s','%s','%s','%s','%s','%s','%s','%s' "%(id,title,author_and_date,pubdate,img,rate,href,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+        user_sql = 'INSERT INTO book_new (id,title,publisher_and_author,pubdate,img,rate,href,create_time) VALUES(' + book_data + ');'
         cursor.execute(user_sql)
         conn.commit()
     except Exception as e:
